@@ -1,0 +1,13 @@
+.*/
+
+# compressed file
+*.gz
+
+# build directory
+**/build/
+
+
+
+
+
+
