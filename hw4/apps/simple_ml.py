@@ -134,7 +134,29 @@ def train_cifar10(model, dataloader, n_epochs=1, optimizer=ndl.optim.Adam,
     """
     np.random.seed(4)
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    model.train()
+    opt = optimizer(model.parameters(), lr=lr, weight_decay=weight_decay)
+    for _ in range(n_epochs):
+        correct, total_loss = 0, 0
+        for batch in dataloader:
+            opt.reset_grad()
+            X, y = batch
+            X, y = ndl.Tensor(X, device=device), ndl.Tensor(y, device=device)
+            out = model(X)
+            correct += np.sum(np.argmax(out.numpy(), axis=1) == y.numpy())
+            loss = loss_fn()(out, y)
+            total_loss += loss.data.numpy() * y.shape[0]
+            loss.backward()
+            opt.step()
+        avg_acc = correct/y.shape[0]
+        avg_loss = total_loss/y.shape[0]    
+    
+    return avg_acc, avg_loss
+
+
+            
+
+
     ### END YOUR SOLUTION
 
 

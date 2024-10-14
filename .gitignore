@@ -4,15 +4,20 @@
 *.gz
 
 # build directory
-**/build/
+hw1/build/
+hw2/build/
+hw3/build/
+hw4/build/
 
 # binary
 *.pyc
 *.so
 
 # data
-**/data/
-
+hw1/data/
+hw2/data/
+hw3/data/
+hw4/data/
 
 # pycache
 **/__pycache__/
