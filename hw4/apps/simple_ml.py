@@ -137,25 +137,27 @@ def train_cifar10(model, dataloader, n_epochs=1, optimizer=ndl.optim.Adam,
     model.train()
     opt = optimizer(model.parameters(), lr=lr, weight_decay=weight_decay)
     for _ in range(n_epochs):
+        
         correct, total_loss = 0, 0
+        nsteps = 0
         for batch in dataloader:
+            nsteps += 1
             opt.reset_grad()
             X, y = batch
             X, y = ndl.Tensor(X, device=device), ndl.Tensor(y, device=device)
             out = model(X)
             correct += np.sum(np.argmax(out.numpy(), axis=1) == y.numpy())
             loss = loss_fn()(out, y)
-            total_loss += loss.data.numpy() * y.shape[0]
+            total_loss += loss.data.numpy()
             loss.backward()
             opt.step()
-        avg_acc = correct/y.shape[0]
-        avg_loss = total_loss/y.shape[0]    
+        
+        avg_acc = correct / len(dataloader.dataset)
+        avg_loss = total_loss / nsteps
+
+        print(f"round {_}, avg_acc = {avg_acc}, avg_loss = {avg_loss}") 
     
     return avg_acc, avg_loss
-
-
-            
-
 
     ### END YOUR SOLUTION
 
@@ -175,7 +177,18 @@ def evaluate_cifar10(model, dataloader, loss_fn=nn.SoftmaxLoss):
     """
     np.random.seed(4)
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    model.eval()
+    correct, total_loss = 0, 0
+    nsteps = 0
+    for batch in dataloader:
+        nsteps += 1
+        X, y = batch
+        X, y = ndl.Tensor(X, device=device), ndl.Tensor(y, device=device)
+        out = model(X)
+        loss = loss_fn()(out, y)
+        correct += np.sum(np.argmax(out.numpy(), axis=1) == y.numpy())
+        total_loss += loss.data.numpy()
+    return correct / len(dataloader.dataset), total_loss / nsteps
     ### END YOUR SOLUTION
 
 
