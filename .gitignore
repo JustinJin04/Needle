@@ -1,0 +1,18 @@
+.*/
+
+# compressed file
+*.gz
+
+# build directory
+**/build/
+
+# binary
+*.pyc
+*.so
+
+# data
+**/data/
+
+
+# pycache
+**/__pycache__/

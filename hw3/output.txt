@@ -1,0 +1,39 @@
+/home/Justin/miniconda3/bin/python3: No module named pybind11
+-- Found pybind11: /home/Justin/miniconda3/envs/dlsys/lib/python3.12/site-packages/pybind11/include (found version "2.13.1")
+-- Found cuda, building cuda backend
+Wed Jul 24 15:34:53 2024       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 555.58.02              Driver Version: 546.80         CUDA Version: 12.3     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 3060 ...    On  |   00000000:01:00.0 Off |                  N/A |
+| N/A   51C    P0             19W /   65W |       0MiB /   6144MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI        PID   Type   Process name                              GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+-- Autodetected CUDA architecture(s):  8.6
+-- Configuring done (1.4s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/Justin/work/dlsys/hw3/build
+make[1]: Entering directory '/home/Justin/work/dlsys/hw3/build'
+[ 50%] Built target ndarray_backend_cpu
+[ 75%] Building NVCC (Device) object CMakeFiles/ndarray_backend_cuda.dir/src/ndarray_backend_cuda_generated_ndarray_backend_cuda.cu.o
+/home/Justin/work/dlsys/hw3/src/ndarray_backend_cuda.cu(98): warning #177-D: variable "gid" was declared but never referenced
+    size_t gid = blockIdx.x * blockDim.x + threadIdx.x;
+           ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+[100%] Linking CXX shared module /home/Justin/work/dlsys/hw3/python/needle/backend_ndarray/ndarray_backend_cuda.cpython-312-x86_64-linux-gnu.so
+[100%] Built target ndarray_backend_cuda
+make[1]: Leaving directory '/home/Justin/work/dlsys/hw3/build'
