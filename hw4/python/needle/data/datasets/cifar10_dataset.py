@@ -22,7 +22,37 @@ class CIFAR10Dataset(Dataset):
         y - numpy array of labels
         """
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        def unpickle(file):
+            with open(file, "rb") as fo:
+                dict = pickle.load(fo,encoding='bytes')
+            return dict
+
+        # TODO: dtype=float32?
+        dtype='float32'
+        
+        self.X = None
+        self.y = None
+        if train:
+            for i in range(1,6,1):
+                data_batch_filename = os.path.join(base_folder, f"data_batch_{i}")
+                dict = unpickle(data_batch_filename)
+                if self.X is None:
+                    self.X = np.array(dict[b'data'], dtype=dtype)
+                    self.y = dict[b'labels']
+                else:
+                    self.X = np.concatenate([self.X, np.array(dict[b'data'], dtype=dtype)], axis=0)
+                    self.y = np.concatenate([self.y, dict[b'labels']], axis=0)
+                self.X /= 255
+            
+            self.transforms = transforms
+        else:
+            test_batch_filename = os.path.join(base_folder, "test_batch")
+            dict = unpickle(test_batch_filename)
+            self.X = np.array(dict[b'data'], dtype=dtype)
+            self.y = dict[b'labels']
+
+            self.transforms = transforms
+                
         ### END YOUR SOLUTION
 
     def __getitem__(self, index) -> object:
@@ -31,7 +61,15 @@ class CIFAR10Dataset(Dataset):
         Image should be of shape (3, 32, 32)
         """
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        assert self.transforms == None, "TODO: now transform is diabled"
+        X = self.X[index]
+        y = self.y[index]
+
+        if len(X.shape) == 1:
+            return X.reshape(3,32,32), y
+        else:
+            return np.stack([raw_data.reshape(3,32,32) for raw_data in X], axis=0)
+
         ### END YOUR SOLUTION
 
     def __len__(self) -> int:
@@ -39,5 +77,5 @@ class CIFAR10Dataset(Dataset):
         Returns the total number of examples in the dataset
         """
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        return self.X.shape[0]
         ### END YOUR SOLUTION

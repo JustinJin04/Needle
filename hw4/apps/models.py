@@ -6,18 +6,50 @@ import math
 import numpy as np
 np.random.seed(0)
 
+### TODO: Implement resnet by myself
 
+def ConvBN(in_channels, out_channels, kernel_size, stride, device, dtype):
+    return nn.Sequential(
+        nn.Conv(in_channels, out_channels, kernel_size, stride=stride, bias=True, device=device, dtype=dtype),
+        nn.BatchNorm2d(out_channels, device=device, dtype=dtype),
+        nn.ReLU()
+    )
+
+# specially for 2 convBN layers 
+class ResidualBlock(ndl.nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, stride, device, dtype):
+        self.conv1 = ConvBN(in_channels,out_channels, kernel_size, stride, device, dtype)
+        self.conv2 = ConvBN(in_channels,out_channels, kernel_size, stride, device, dtype)
+    def forward(self, x):
+        return self.conv2(self.conv1(x)) + x
+        
 class ResNet9(ndl.nn.Module):
     def __init__(self, device=None, dtype="float32"):
         super().__init__()
-        ### BEGIN YOUR SOLUTION ###
-        raise NotImplementedError() ###
-        ### END YOUR SOLUTION
+        self.conv1 = ConvBN(3, 16, 7, 4, device=device, dtype=dtype)
+        self.conv2 = ConvBN(16, 32, 3, 2, device=device, dtype=dtype)
+        self.resblock1 = ResidualBlock(32, 32, 3, 1, device=device, dtype=dtype)
+        self.conv3 = ConvBN(32, 64, 3, 2, device=device, dtype=dtype)
+        self.conv4 = ConvBN(64, 128, 3, 2, device=device, dtype=dtype)
+        self.resblock2 = ResidualBlock(128, 128, 3, 1, device=device, dtype=dtype)
+        self.flatten = nn.Flatten()
+        self.linear1 = nn.Linear(128, 128, device=device, dtype=dtype)
+        self.relu = nn.ReLU()
+        self.linear2 = nn.Linear(128,10, device=device, dtype=dtype)
 
     def forward(self, x):
-        ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
-        ### END YOUR SOLUTION
+        out = self.conv1(x)
+        out = self.conv2(out)
+        out = self.resblock1(out)
+        out = self.conv3(out)
+        out = self.conv4(out)
+        out = self.resblock2(out)
+        out = self.flatten(out)
+        out = self.linear1(out)
+        out = self.relu(out)
+        out = self.linear2(out)
+        return out
+
 
 
 class LanguageModel(nn.Module):

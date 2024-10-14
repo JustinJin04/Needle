@@ -1,43 +1,63 @@
-#include <stdio.h>
+#include <cuda_runtime.h>
+#include <iostream>
 
-// 声明设备函数
-__device__ int add(int a, int b) {
-    return a + b;
-}
-
-// 声明函数指针类型
-typedef int (*FuncType)(int, int);
-
-// CUDA kernel，接收一个函数指针
-__global__ void kernel(FuncType func, int a, int b, int* result) {
-    *result = (*func)(a, b);
+// CUDA 核函数，计算向量加法
+__global__ void vecAdd(float *A, float *B, float *C, int N) {
+    int i = blockDim.x * blockIdx.x + threadIdx.x;
+    if (i < N) {
+        C[i] = A[i] + B[i];
+    }
 }
 
 int main() {
-    // 定义并初始化变量
-    int a = 5, b = 3;
-    int result;
+    int N = 1000;  // 向量大小
+    size_t size = N * sizeof(float);
 
-    // 在设备端分配内存以存储结果
-    int* d_result;
-    cudaMalloc(&d_result, sizeof(int));
+    // 在主机端分配内存
+    float *h_A = (float *)malloc(size);
+    float *h_B = (float *)malloc(size);
+    float *h_C = (float *)malloc(size);
 
-    // 获取设备上函数指针的地址
-    FuncType d_func;
-    cudaMemcpyFromSymbol(&d_func, add, sizeof(FuncType));
-    printf("Start\n");
+    // 初始化向量
+    for (int i = 0; i < N; i++) {
+        h_A[i] = i * 1.0f;
+        h_B[i] = i * 2.0f;
+    }
 
-    // 启动 kernel，传递函数指针和其他参数
-    kernel<<<1, 1>>>(d_func, a, b, d_result);
+    // 在设备端分配内存
+    float *d_A, *d_B, *d_C;
+    cudaMalloc((void **)&d_A, size);
+    cudaMalloc((void **)&d_B, size);
+    cudaMalloc((void **)&d_C, size);
 
-    // 从设备端拷贝结果回主机端
-    cudaMemcpy(&result, d_result, sizeof(int), cudaMemcpyDeviceToHost);
+    // 将数据从主机传输到设备
+    cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice);
 
-    // 输出结果
-    printf("Result: %d\n", result);
+    // 设置 CUDA 网格和块维度
+    int threadsPerBlock = 256;
+    int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;
+
+    // 启动向量加法核函数
+    vecAdd<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_C, N);
+
+    // 将结果从设备传回主机
+    cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost);
+
+    // 输出前 10 个结果
+    for (int i = 0; i < 10; i++) {
+        std::cout << h_A[i] << " + " << h_B[i] << " = " << h_C[i] << std::endl;
+    }
 
     // 释放设备内存
-    cudaFree(d_result);
+    cudaFree(d_A);
+    cudaFree(d_B);
+    cudaFree(d_C);
+
+    // 释放主机内存
+    free(h_A);
+    free(h_B);
+    free(h_C);
 
     return 0;
 }

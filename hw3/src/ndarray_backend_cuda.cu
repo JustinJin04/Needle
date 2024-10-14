@@ -552,7 +552,7 @@ __global__ void ReduceSumKernel(const scalar_t * a,scalar_t* out,size_t size, si
   }
 }
 
-void ReduceMax(const CudaArray& a, CudaArray* out, size_t reduce_size) {
+void ReduceMax(const CudaArray& a, CudaArray& out, size_t reduce_size) {
   /**
    * Reduce by taking maximum over `reduce_size` contiguous blocks.  Even though it is inefficient,
    * for simplicity you can perform each reduction in a single CUDA thread.
@@ -566,14 +566,14 @@ void ReduceMax(const CudaArray& a, CudaArray* out, size_t reduce_size) {
   
   size_t size=a.size/reduce_size;
   CudaDims dim = CudaOneDim(size);
-  ReduceMaxKernel<<<dim.grid,dim.block>>>(a.ptr,out->ptr,size,reduce_size);
+  ReduceMaxKernel<<<dim.grid,dim.block>>>(a.ptr,out.ptr,size,reduce_size);
 
   /// END SOLUTION
 }
 
 
 
-void ReduceSum(const CudaArray& a, CudaArray* out, size_t reduce_size) {
+void ReduceSum(const CudaArray& a, CudaArray& out, size_t reduce_size) {
   /**
    * Reduce by taking summation over `reduce_size` contiguous blocks.  Again, for simplicity you 
    * can perform each reduction in a single CUDA thread.
@@ -587,7 +587,7 @@ void ReduceSum(const CudaArray& a, CudaArray* out, size_t reduce_size) {
   size_t size=a.size/reduce_size;
   CudaDims dim = CudaOneDim(size);
   // ReduceKernel<<<dim.grid,dim.block>>>(a.ptr,out->ptr,size,reduce_size,DeviceSum);
-  ReduceSumKernel<<<dim.grid,dim.block>>>(a.ptr,out->ptr,size,reduce_size);
+  ReduceSumKernel<<<dim.grid,dim.block>>>(a.ptr,out.ptr,size,reduce_size);
   /// END SOLUTION
 }
 

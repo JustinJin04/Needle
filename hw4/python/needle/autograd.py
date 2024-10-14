@@ -188,6 +188,7 @@ class TensorTuple(Value):
 
     def detach(self):
         """Create a new tensor that shares the data but detaches from the graph."""
+        # return Tuple.make_const(self.realize_cached_data())
         return TensorTuple.make_const(self.realize_cached_data())
 
 
@@ -361,7 +362,15 @@ class Tensor(Value):
 
     __radd__ = __add__
     __rmul__ = __mul__
-    __rsub__ = __sub__
+    # __rsub__ = __sub__
+    # TODO: rsub INCORRECT implementation
+    def __rsub__(self, other):
+        """self.__rsub__(other) = other - self"""
+        if isinstance(other, Tensor):
+            return needle.ops.EWiseAdd()(other, -self)
+        else:
+            return needle.ops.AddScalar(other)(-self)
+
     __rmatmul__ = __matmul__
 
 
@@ -381,7 +390,19 @@ def compute_gradient_of_variables(output_tensor, out_grad):
     reverse_topo_order = list(reversed(find_topo_sort([output_tensor])))
 
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    for node in reverse_topo_order:
+        adjoint = sum_node_list(node_to_output_grads_list[node])
+        node.grad = adjoint
+        # assert(node.grad.dtype == "float32")
+        if(node.op is None):
+            continue
+        partial_adjoints = node.op.gradient_as_tuple(node.grad,node)
+        for input_tensor, partial_adjoint in zip(node.inputs,partial_adjoints):
+            if input_tensor not in node_to_output_grads_list:
+                node_to_output_grads_list[input_tensor]=[]
+            node_to_output_grads_list[input_tensor].append(partial_adjoint)
+            
+
     ### END YOUR SOLUTION
 
 
@@ -394,14 +415,25 @@ def find_topo_sort(node_list: List[Value]) -> List[Value]:
     sort.
     """
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    topo_order = []
+    for node in node_list:
+        visited = []
+        topo_sort_dfs(node,visited,topo_order)
+    return topo_order
+    
+    
     ### END YOUR SOLUTION
 
 
-def topo_sort_dfs(node, visited, topo_order):
+def topo_sort_dfs(node,visited,topo_order):
     """Post-order DFS"""
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    visited.append(node)
+    for parent in node.inputs:
+        if parent in visited:
+            continue
+        topo_sort_dfs(parent,visited,topo_order)
+    topo_order.append(node)
     ### END YOUR SOLUTION
 
 

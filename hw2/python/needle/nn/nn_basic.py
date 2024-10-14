@@ -173,17 +173,6 @@ class BatchNorm1d(Module):
             return self.weight.broadcast_to(x.shape)*norm + self.bias.broadcast_to(x.shape)
         else:
             return self.weight.broadcast_to(x.shape)*(x-self.running_mean.broadcast_to(x.shape))/((self.running_var.broadcast_to(x.shape)+self.eps)**0.5)+self.bias.broadcast_to(x.shape)
-        # if self.training is True:
-        #     Ex=x.sum(axes=0)/x.shape[0]
-        #     Varx=((x-Ex.broadcast_to(x.shape))**2).sum(axes=0)/x.shape[0]
-        #     self.running_mean=(1-self.momentum)*self.running_mean+self.momentum*Ex.data
-        #     self.running_var=(1-self.momentum)*self.running_var+self.momentum*Varx.data
-        #     norm = (x-Ex.broadcast_to(x.shape))/((Varx.broadcast_to(x.shape)+self.eps)**0.5)
-        #     return self.weight.broadcast_to(x.shape)*norm+self.bias.broadcast_to(x.shape)
-        # else:
-        #     mean = self.running_mean.broadcast_to(x.shape)
-        #     var = self.running_var.broadcast_to(x.shape)
-        #     return self.weight.broadcast_to(x.shape)*(x-mean)/((var+self.eps)**0.5)+self.bias.broadcast_to(x.shape)
         ### END YOUR SOLUTION
 
 
