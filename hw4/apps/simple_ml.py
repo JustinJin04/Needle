@@ -215,7 +215,26 @@ def epoch_general_ptb(data, model, seq_len=40, loss_fn=nn.SoftmaxLoss(), opt=Non
     """
     np.random.seed(4)
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    if opt is not None:
+        model.train()
+    else:
+        model.eval()
+    avg_acc, avg_loss = 0, 0
+    nbatch = data.shape[0]
+    for i in range (nbatch - 1):
+        if opt is not None:
+            opt.reset_grad()
+        
+        input_data, target = ndl.data.get_batch(data, i, seq_len, device=device, dtype=dtype)
+        out, h = model(input_data)
+        acc, loss = correct_loss(out, target)
+        avg_acc += acc
+        avg_loss += loss
+
+        if opt is not None:
+            opt.step()
+            
+
     ### END YOUR SOLUTION
 
 
@@ -242,7 +261,35 @@ def train_ptb(model, data, seq_len=40, n_epochs=1, optimizer=ndl.optim.SGD,
     """
     np.random.seed(4)
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    model.train()
+    opt = optimizer(model.parameters(),
+                    lr=lr,
+                    weight_decay=weight_decay,
+    )
+    nbatch, bs = data.shape
+    assert nbatch > 1
+    
+    for _ in range(n_epochs):
+        avg_acc, avg_loss = 0, 0
+        for i in range(nbatch - 1):
+            opt.reset_grad()
+            input_data, target = ndl.data.get_batch(data, i, seq_len, device=device, dtype=dtype)
+            out, h = model(input_data)
+            loss = loss_fn()(out, target)
+            loss.backward()
+            opt.step()
+
+            avg_acc += np.sum(np.argmax(out.numpy(), axis=1) == target.numpy())
+            avg_loss += loss.numpy()
+        
+        # softmax loss function's output is total_loss / num_samples
+        avg_acc /= (nbatch - 1) * bs * seq_len
+        avg_loss /= (nbatch - 1)
+    
+    return avg_acc, avg_loss
+            
+            
+
     ### END YOUR SOLUTION
 
 def evaluate_ptb(model, data, seq_len=40, loss_fn=nn.SoftmaxLoss,
@@ -262,15 +309,48 @@ def evaluate_ptb(model, data, seq_len=40, loss_fn=nn.SoftmaxLoss,
     """
     np.random.seed(4)
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    model.eval()
+    avg_acc, avg_loss = 0, 0
+    nbatch, bs = data.shape
+    for i in range(nbatch - 1):
+        input_data, target = ndl.data.get_batch(data, i, seq_len, device=device, dtype=dtype)
+        out, h = model(input_data)
+        loss = loss_fn()(out, target)
+        
+        avg_acc += np.sum(np.argmax(out.numpy(), axis=1) == target.numpy())
+        avg_loss += loss.numpy()
+    
+    avg_acc /= (nbatch - 1) * bs * seq_len
+    avg_loss /= (nbatch - 1)
+    
+    return avg_acc, avg_loss
     ### END YOUR SOLUTION
 
 ### CODE BELOW IS FOR ILLUSTRATION, YOU DO NOT NEED TO EDIT
 
 
 def loss_err(h, y):
-    """Helper function to compute both loss and error"""
+    """
+    Helper function to compute both loss and error
+        
+    Args:
+        h: (seq_len*bs, output_size)
+        y: (seq_len*bs,)
+    """
     y_one_hot = np.zeros((y.shape[0], h.shape[-1]))
     y_one_hot[np.arange(y.size), y] = 1
     y_ = ndl.Tensor(y_one_hot)
     return softmax_loss(h, y_).numpy(), np.mean(h.numpy().argmax(axis=1) != y)
+
+def correct_loss(h, y):
+    """
+    Helper function to compute both total correctness and total loss
+        
+    Args:
+        h: (seq_len*bs, output_size)
+        y: (seq_len*bs,)
+    """
+    y_one_hot = np.zeros((y.shape[0], h.shape[-1]))
+    y_one_hot[np.arange(y.size), y] = 1
+    y_ = ndl.Tensor(y_one_hot)
+    return np.sum(h.numpy().argmax(axis=1) == y), softmax_loss(h, y_).numpy()

@@ -421,37 +421,73 @@ def stack(args, axis):
     return Stack(axis)(make_tuple(*args))
 
 
-class Split(TensorTupleOp):
+
+class Cat(TensorOp):
     def __init__(self, axis: int):
+        self.axis = axis
+
+    def compute(self, args: TensorTuple) -> Tensor:
+        self.cat_size = args[0].shape[self.axis]
+        shape = list(args[0].shape)
+        shape[self.axis] *= len(args)
+        output = array_api.empty(shape, dtype = args[0].dtype, device = args[0].device)
+        stack_slice_list = [slice(None, None, 1) for _ in range(len(shape))]
+        for i, tensor in enumerate(args):
+            stack_slice_list[self.axis] = slice(i * self.cat_size, (i + 1) * self.cat_size, 1)
+            output[tuple(stack_slice_list)] = tensor
+        return output
+    
+    def gradient(self, out_grad, node):
+        return split(out_grad, self.axis, split_size=self.cat_size)
+    
+def cat(args, axis):
+    return Cat(axis)(make_tuple(*args))
+
+
+
+class Split(TensorTupleOp):
+    def __init__(self, axis: int, split_size=1, keepdims=False):
         """
         Splits a tensor along an axis into a tuple of tensors.
         (The "inverse" of Stack)
         Parameters:
         axis - dimension to split
+
+        update: if split_size=1 && keepdims=False, than the ndims will drop by 1, otherwise wont't drop
         """
         self.axis = axis
+        self.split_size = split_size
+        self.keepdims = keepdims
 
     def compute(self, A):
         ### BEGIN YOUR SOLUTION
+        assert A.shape[self.axis] % self.split_size == 0, "must be divisible"
+        split_slice_list = [slice(None, None, 1) for _ in range(len(A.shape))]
         ret = []
-        split_slice_list = [slice(0, s, 1) for s in A.shape]
         shape = list(A.shape)
-        shape.pop(self.axis)
-
-        for i in range(A.shape[self.axis]):
-            split_slice_list[self.axis] = i
+        if self.split_size == 1 and self.keepdims == False:
+            shape.pop(self.axis)
+        else:
+            shape[self.axis] = self.split_size
+        
+        for i in range(0, A.shape[self.axis], self.split_size):
+            split_slice_list[self.axis] = slice(i, i+self.split_size, 1)
             ret.append(A[tuple(split_slice_list)].compact().reshape(shape))
         return tuple(ret)
+
         ### END YOUR SOLUTION
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        return stack(out_grad, self.axis)
+        if self.split_size == 1 and self.keepdims == False:
+            return stack(out_grad, self.axis)
+        else:
+            return cat(out_grad, self.axis)
         ### END YOUR SOLUTION
 
 
-def split(a, axis):
-    return Split(axis)(a)
+def split(a, axis, split_size=1, keepdims=False):
+    return Split(axis, split_size=split_size, keepdims=keepdims)(a)
 
 
 class Flip(TensorOp):

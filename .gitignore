@@ -21,3 +21,6 @@ hw4/data/
 
 # pycache
 **/__pycache__/
+
+# test ipynb
+test.ipynb

@@ -373,6 +373,12 @@ class Tensor(Value):
 
     __rmatmul__ = __matmul__
 
+    def __rtruediv__(self, other):
+        if isinstance(other, Tensor):
+            return needle.ops.EWiseDiv()(other, self)
+        else:
+            return needle.ops.DivScalar(other)(self)
+
 
 def compute_gradient_of_variables(output_tensor, out_grad):
     """Take gradient of output node with respect to each node in node_list.

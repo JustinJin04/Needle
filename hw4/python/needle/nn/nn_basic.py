@@ -121,6 +121,10 @@ class ReLU(Module):
         return ops.relu(x)
         ### END YOUR SOLUTION
 
+class Tanh(Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return ops.tanh(x)
+
 class Sequential(Module):
     def __init__(self, *modules):
         super().__init__()

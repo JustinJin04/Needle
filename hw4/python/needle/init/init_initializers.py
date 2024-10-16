@@ -15,11 +15,6 @@ def xavier_normal(fan_in, fan_out, gain=1.0, **kwargs):
 
 
 # TODO: implement by myself
-# def kaiming_uniform(fan_in, fan_out, shape=None, nonlinearity="relu", **kwargs):
-#     assert nonlinearity == "relu", "Only relu supported currently"
-#     ### BEGIN YOUR SOLUTION
-#     raise NotImplementedError()
-#     ### END YOUR SOLUTION
 def kaiming_uniform(fan_in, fan_out, shape=None, nonlinearity="relu", **kwargs):
     assert nonlinearity == "relu", "Only relu supported currently"
     if shape is not None:

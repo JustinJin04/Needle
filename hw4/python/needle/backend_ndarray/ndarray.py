@@ -640,6 +640,14 @@ class NDArray:
     
 
     def sum(self, axis=None, keepdims=False):
+        # axis is 
+        # an int: sum over it
+        # a tuple without elements: do nothing and return self
+        # a tuple with several elemetns: sum over these axes
+        # None: sum over all axis
+        
+        if isinstance(axis, tuple) and not axis:
+            return self
         view, out, reduce_size = self.reduce_view_out(axis, keepdims=keepdims)
         self.device.reduce_sum(view.compact()._handle, out._handle, reduce_size)
         return out
