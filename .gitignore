@@ -8,6 +8,7 @@ hw1/build/
 hw2/build/
 hw3/build/
 hw4/build/
+hw4_extra/build/
 
 # binary
 *.pyc
@@ -18,6 +19,7 @@ hw1/data/
 hw2/data/
 hw3/data/
 hw4/data/
+hw4_extra/data/
 
 # pycache
 **/__pycache__/

@@ -5,6 +5,7 @@ from needle.autograd import Tensor
 from needle import ops
 import needle.init as init
 import numpy as np
+import math
 
 
 class Parameter(Tensor):
@@ -83,6 +84,11 @@ class Linear(Module):
     def __init__(
         self, in_features, out_features, bias=True, device=None, dtype="float32"
     ):
+        """
+        supply input x.ndim > 2 by reshape before and after
+        input x's last dim must equal in_features
+        """
+        
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -97,11 +103,28 @@ class Linear(Module):
 
     def forward(self, X: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
+        """
+        X: (*, in_features)
+        output: (*, out_features)
+        """
+        assert X.shape[-1] == self.in_features
+        input_shape = X.shape
+
+        if len(input_shape) > 2:
+            compact_shape = (math.prod(input_shape) // input_shape[-1], input_shape[-1])
+            X = X.reshape(compact_shape)
+
         if self.bias is None:
-            return ops.matmul(X,self.weight)
+            output = ops.matmul(X,self.weight)
         else:
             shape=X.shape[:-1]+(self.out_features,)
-            return ops.matmul(X,self.weight) + ops.broadcast_to(self.bias,shape)
+            output = ops.matmul(X,self.weight) + ops.broadcast_to(self.bias,shape)
+        
+        if len(input_shape) > 2:
+            output_shape = input_shape[:-1] + (self.out_features,)
+            output = output.reshape(output_shape)
+        
+        return output
         ### END YOUR SOLUTION
 
 
