@@ -4,22 +4,24 @@
 *.gz
 
 # build directory
-hw1/build/
-hw2/build/
-hw3/build/
-hw4/build/
-hw4_extra/build/
+build/
+CMU10-714/hw1/build/
+CMU10-714/hw2/build/
+CMU10-714/hw3/build/
+CMU10-714/hw4/build/
+CMU10-714/hw4_extra/build/
 
 # binary
 *.pyc
 *.so
 
 # data
-hw1/data/
-hw2/data/
-hw3/data/
-hw4/data/
-hw4_extra/data/
+data/
+CMU10-714/hw1/data/
+CMU10-714/hw2/data/
+CMU10-714/hw3/data/
+CMU10-714/hw4/data/
+CMU10-714/hw4_extra/data/
 
 # pycache
 **/__pycache__/
