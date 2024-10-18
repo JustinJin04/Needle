@@ -376,12 +376,12 @@ class Embedding(Module):
         ### BEGIN YOUR SOLUTION
         self.num_embeddings = num_embeddings
         self.embedding_dim = embedding_dim
-        self.weight = Parameter(init.randn(num_embeddings, embedding_dim, 
+        self.weight = init.randn(num_embeddings, embedding_dim, 
                                  mean=0, 
                                  std=1, 
                                  device=device, 
                                  dtype=dtype,
-                                 requires_grad=True))
+                                 requires_grad=True)
         ### END YOUR SOLUTION
 
     def forward(self, x: Tensor) -> Tensor:
