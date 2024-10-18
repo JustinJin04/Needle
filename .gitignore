@@ -4,7 +4,7 @@
 *.gz
 
 # build directory
-build/
+/build/
 CMU10-714/hw1/build/
 CMU10-714/hw2/build/
 CMU10-714/hw3/build/
@@ -16,7 +16,7 @@ CMU10-714/hw4_extra/build/
 *.so
 
 # data
-data/
+/data/
 CMU10-714/hw1/data/
 CMU10-714/hw2/data/
 CMU10-714/hw3/data/
