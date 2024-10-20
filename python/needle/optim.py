@@ -27,7 +27,7 @@ class SGD(Optimizer):
     def step(self):
         ### BEGIN YOUR SOLUTION
         for para in self.params:
-            self.u[para]=self.momentum * self.u[para] + (1-self.momentum) * ndl.Tensor(para.grad.data + self.weight_decay * para.data,dtype="float32",requires_grad=False)
+            self.u[para]=self.momentum * self.u[para] + (1-self.momentum) * ndl.Tensor(para.grad.data + self.weight_decay * para.data,device=para.device,dtype="float32",requires_grad=False)
             para.data = para.data - self.lr * self.u[para]
 
 
@@ -73,6 +73,6 @@ class Adam(Optimizer):
             self.v[w] = self.beta2 * self.v[w] + (1-self.beta2) * (grad**2)
             unbiased_m = self.m[w]/(1-self.beta1**self.t)
             unbiased_v = self.v[w]/(1-self.beta2**self.t)
-            w.data = ndl.Tensor(w.data - self.lr * unbiased_m / (unbiased_v ** 0.5 + self.eps),dtype="float32")
+            w.data = ndl.Tensor(w.data - self.lr * unbiased_m / (unbiased_v ** 0.5 + self.eps),device=w.device,dtype="float32")
             
         ### END YOUR SOLUTION

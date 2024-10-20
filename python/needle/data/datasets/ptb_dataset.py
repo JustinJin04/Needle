@@ -111,7 +111,7 @@ def batchify(data, batch_size, device, dtype):
     """
     ### BEGIN YOUR SOLUTION
     nbatch = len(data) // batch_size
-    data = np.array(data[:nbatch * batch_size]).reshape((nbatch, batch_size))
+    data = Tensor(np.array(data[:nbatch * batch_size]).reshape((batch_size, nbatch)).transpose(), device=device, dtype=dtype)
     return data
     ### END YOUR SOLUTION
 
