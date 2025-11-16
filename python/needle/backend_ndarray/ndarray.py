@@ -220,9 +220,11 @@ class NDArray:
             return self
         else:
             out = NDArray.make(self.shape, device=self.device)
+            # print(f"self._handle: {self._handle}, out._handle: {out._handle}, self.shape: {self.shape}, self.strides: {self.strides}, self._offset: {self._offset}")
             self.device.compact(
                 self._handle, out._handle, self.shape, self.strides, self._offset
             )
+            assert out.is_compact()
             return out
 
     def as_strided(self, shape, strides):
@@ -256,7 +258,7 @@ class NDArray:
         ### BEGIN YOUR SOLUTION
         if self.is_compact() is not True or prod(new_shape) != prod(self.shape):
             # raise ValueError
-            if self.is_compact is not True:
+            if self.is_compact() is not True:
                 raise ValueError
             else:
                 raise ValueError
@@ -365,64 +367,102 @@ class NDArray:
 
     def __getitem__(self, idxs):
         """
-        The __getitem__ operator in Python allows us to access elements of our
-        array.  When passed notation such as a[1:5,:-1:2,4,:] etc, Python will
-        convert this to a tuple of slices and integers (for singletons like the
-        '4' in this example).  Slices can be a bit odd to work with (they have
-        three elements .start .stop .step), which can be None or have negative
-        entries, so for simplicity we wrote the code for you to convert these
-        to always be a tuple of slices, one of each dimension.
-
-        For this tuple of slices, return an array that subsets the desired
-        elements.  As before, this can be done entirely through compute a new
-        shape, stride, and offset for the new "view" into the original array,
-        pointing to the same memory
-
-        Raises:
-            AssertionError if a slice has negative size or step, or if number
-            of slices is not equal to the number of dimension (the stub code
-            already raises all these errors.
-
-        Args:
-            idxs tuple: (after stub code processes), a tuple of slice elements
-            coresponding to the subset of the matrix to get
-
-        Returns:
-            NDArray: a new NDArray object corresponding to the selected
-            subset of elements.  As before, this should not copy memroy but just
-            manipulate the shape/strides/offset of the new array, referecing
-            the same array as the original one.
+        __getitem__ 运算符，用于访问数组元素。
+        此版本已修正整数索引和负数索引的问题，但*不*支持 Ellipsis (...)。
         """
+        assert self._offset == 0, "TODO: 考虑 offset != 0 的情况"
 
-        # handle singleton as tuple, everything as slices
+        # 1. 将索引标准化为元组
         if not isinstance(idxs, tuple):
             idxs = (idxs,)
-        idxs = tuple(
-            [
-                self.process_slice(s, i) if isinstance(s, slice) else slice(s, s + 1, 1)
-                for i, s in enumerate(idxs)
-            ]
-        )
-        assert len(idxs) == self.ndim, "Need indexes equal to number of dimensions"
 
-        ### BEGIN YOUR SOLUTION
-        assert self._offset==0, "TODO: consider offset != 0"
+        # 2. 初始化新视图的属性
         new_shape = []
         new_strides = []
-        new_offset = self._offset
-        for i, s in enumerate(idxs):
-            new_offset += self.strides[i]*s.start
-            new_strides.append(self.strides[i]*s.step)
-            new_shape.append((s.stop-s.start+s.step-1)//s.step)
-        return NDArray.make(tuple(new_shape),tuple(new_strides),self.device,self._handle,new_offset)
-        ### END YOUR SOLUTION
+        new_offset = self._offset  # 从当前数组的偏移量开始
+
+        # 3. 处理索引并进行填充
+        processed_idxs = list(idxs)
+        
+        # 显式地禁止 Ellipsis
+        assert all(s is not Ellipsis for s in processed_idxs), \
+            "此 __getitem__ 版本暂不支持 Ellipsis (...)"
+
+        # 如果提供的索引数量少于数组维度，用完整的切片 (slice(None)) 填充末尾
+        num_missing_dims = self.ndim - len(processed_idxs)
+        if num_missing_dims > 0:
+            processed_idxs.extend([slice(None)] * num_missing_dims)
+
+        # 索引过多（即使填充后）也是一个错误
+        assert len(processed_idxs) == self.ndim, \
+            f"索引过多：数组有 {self.ndim} 维，但提供了 {len(idxs)} 个索引"
+
+        # 4. 循环计算新的 shape, strides 和 offset
+        for i, idx in enumerate(processed_idxs):
+            dim_size = self.shape[i]
+            dim_stride = self.strides[i]
+
+            if isinstance(idx, int):
+                ### 修正 Bug 1 (降维) 和 Bug 2 (负索引) ###
+                
+                # 处理负数索引
+                if idx < 0:
+                    idx += dim_size
+                
+                # 索引越界检查
+                assert 0 <= idx < dim_size, \
+                    f"索引 {idx} 超出第 {i} 维的范围 (大小为 {dim_size})"
+                
+                # 整数索引会增加偏移量
+                new_offset += idx * dim_stride
+                
+                # **关键修正**：
+                # 整数索引会“吃掉”这个维度，
+                # 所以我们 *不* 将它添加到 new_shape 或 new_strides 中。
+                
+            elif isinstance(idx, slice):
+                # 这是一个切片，使用 self.process_slice 进行标准化
+                # (我们假设 process_slice 能正确处理 None 和负数)
+                s = self.process_slice(idx, i) # i 是维度索引
+
+                assert s.step > 0, "切片的步长 (step) 必须为正"
+                
+                # 计算这个维度的新大小
+                if s.stop <= s.start:
+                    current_dim_shape = 0
+                else:
+                    # (公式已在您的代码中提供)
+                    current_dim_shape = (s.stop - s.start + s.step - 1) // s.step
+
+                # 切片的起始位置会增加偏移量
+                new_offset += s.start * dim_stride
+
+                # **关键修正**：
+                # 切片索引会 *保留* 这个维度。
+                
+                # 添加到 new shape 和 new strides
+                new_shape.append(current_dim_shape)
+                new_strides.append(dim_stride * s.step)
+
+            else:
+                raise TypeError(f"不支持的索引类型: {type(idx)}")
+
+        # 5. 返回新的 NDArray 视图
+        return NDArray.make(
+            tuple(new_shape),
+            tuple(new_strides),
+            self.device,
+            self._handle,
+            new_offset
+        )
+
 
     def __setitem__(self, idxs, other):
         """Set the values of a view into an array, using the same semantics
         as __getitem__()."""
         view = self.__getitem__(idxs)
         if isinstance(other, NDArray):
-            assert prod(view.shape) == prod(other.shape)
+            assert prod(view.shape) == prod(other.shape), f"Size mismatch in setitem {view.shape} vs {other.shape}"
             self.device.ewise_setitem(
                 other.compact()._handle,
                 view._handle,
@@ -739,7 +779,7 @@ class NDArray:
 def array(a, dtype="float32", device=None):
     """Convenience methods to match numpy a bit more closely."""
     dtype = "float32" if dtype is None else dtype
-    assert dtype == "float32"
+    # assert dtype == "float32"
     return NDArray(a, device=device)
 
 

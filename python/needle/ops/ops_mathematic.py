@@ -153,23 +153,6 @@ def divide_scalar(a, scalar):
     return DivScalar(scalar)(a)
 
 
-# class Transpose(TensorOp):
-#     def __init__(self, axes: Optional[tuple] = None):
-#         self.axes = axes
-
-#     def compute(self, a):
-#         ### BEGIN YOUR SOLUTION
-#         if(self.axes is None):
-#             return array_api.swapaxes(a,-2,-1)
-#         else:
-#             return array_api.swapaxes(a,self.axes[0],self.axes[1])
-#         ### END YOUR SOLUTION
-
-#     def gradient(self, out_grad, node):
-#         ### BEGIN YOUR SOLUTION
-#         return transpose(out_grad,self.axes)
-#         ### END YOUR SOLUTION
-
 class Transpose(TensorOp): 
     def __init__(self, axes: Optional[tuple] = None):
         self.axes = axes
@@ -425,6 +408,7 @@ def stack(args, axis):
 
 class Cat(TensorOp):
     def __init__(self, axis: int):
+        """TODO: Currently only supports concatenating same shape tensors"""
         self.axis = axis
 
     def compute(self, args: TensorTuple) -> Tensor:
@@ -628,3 +612,33 @@ class Conv(TensorOp):
 
 def conv(a, b, stride=1, padding=1):
     return Conv(stride, padding)(a, b)
+
+
+class FillZeros(TensorOp):
+    def __init__(self, shape: tuple, axes: tuple):
+        self.shape = shape
+        self.axes = axes
+
+    def compute(self, a):
+        ret =  array_api.zeros(self.shape, a.device)
+        ret[self.axes] = a
+        return ret
+
+    def gradient(self, out_grad, node):
+        return out_grad[self.axes]
+
+def fill_zeros(a, shape, axes):
+    return FillZeros(shape, axes)(a)
+
+class GetSlice(TensorOp):
+    def __init__(self, axes: tuple):
+        """BUG: when provice with integer slice (like tensor[1,2,3]), it will still keep dims as 1"""
+        assert isinstance(axes, tuple)
+        self.axes = axes
+
+    def compute(self, a):
+        assert len(a.shape) == len(self.axes)
+        return a[self.axes]
+
+    def gradient(self, out_grad, node):
+        return fill_zeros(out_grad, node.inputs[0].shape, self.axes)

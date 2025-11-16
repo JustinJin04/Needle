@@ -69,6 +69,7 @@ class Adam(Optimizer):
         
         for w in self.params:
             grad = w.grad.data + self.weight_decay * w.data
+            # print(f"Updating parameter with grad: {grad}")
             self.m[w] = self.beta1 * self.m[w] + (1-self.beta1) * grad
             self.v[w] = self.beta2 * self.v[w] + (1-self.beta2) * (grad**2)
             unbiased_m = self.m[w]/(1-self.beta1**self.t)

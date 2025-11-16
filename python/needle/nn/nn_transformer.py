@@ -340,7 +340,7 @@ class Transformer(Module):
 
     def forward(
         self,
-        x, h=None
+        x
     ):
         """
         x: (bs, seq, embedding_size) or (seq, bs, embedding_size)
@@ -361,4 +361,5 @@ class Transformer(Module):
         if not self.batch_first:
             x = ops.transpose(x, axes=(0, 1))
 
-        return x, init.zeros_like(x)
+        return x
+

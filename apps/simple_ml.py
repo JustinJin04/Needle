@@ -6,7 +6,6 @@ import numpy as np
 
 import sys
 
-sys.path.append("python/")
 import needle as ndl
 
 import needle.nn as nn

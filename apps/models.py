@@ -1,8 +1,5 @@
-import sys
-sys.path.append('./python')
 import needle as ndl
 import needle.nn as nn
-import math
 import numpy as np
 np.random.seed(0)
 
@@ -130,6 +127,8 @@ class LanguageModel(nn.Module):
 
         return out, h_out
         ### END YOUR SOLUTION
+
+
 
 
 if __name__ == "__main__":

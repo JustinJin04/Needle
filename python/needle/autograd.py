@@ -278,6 +278,10 @@ class Tensor(Value):
         return self.realize_cached_data().shape
 
     @property
+    def size(self):
+        return self.realize_cached_data().size
+
+    @property
     def dtype(self):
         return self.realize_cached_data().dtype
 
@@ -357,8 +361,16 @@ class Tensor(Value):
     def __neg__(self):
         return needle.ops.Negate()(self)
 
+    def __getitem__(self, axes):
+        return needle.ops.GetSlice(axes)(self)
+    
+    # def __setitem__(self, axes, value):
+    #     # TODO: this is too hacky
+    #     return needle.ops.Slice(axes)(self)
+
     def transpose(self, axes=None):
         return needle.ops.Transpose(axes)(self)
+
 
     __radd__ = __add__
     __rmul__ = __mul__
@@ -399,6 +411,7 @@ def compute_gradient_of_variables(output_tensor, out_grad):
     for node in reverse_topo_order:
         adjoint = sum_node_list(node_to_output_grads_list[node])
         node.grad = adjoint
+        # print(f"node with grad: {node.grad}")
         # assert(node.grad.dtype == "float32")
         if(node.op is None):
             continue
@@ -407,7 +420,6 @@ def compute_gradient_of_variables(output_tensor, out_grad):
             if input_tensor not in node_to_output_grads_list:
                 node_to_output_grads_list[input_tensor]=[]
             node_to_output_grads_list[input_tensor].append(partial_adjoint)
-            
 
     ### END YOUR SOLUTION
 
